@@ -9,7 +9,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.11.1",
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",

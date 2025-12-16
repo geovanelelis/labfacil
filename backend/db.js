@@ -18,5 +18,5 @@ pool.connect((err, client, release) => {
 })
 
 module.exports = {
-  query: (text, params) => poll.query(text, params),
+  query: (text, params) => pool.query(text, params),
 }

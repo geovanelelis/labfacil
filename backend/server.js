@@ -31,14 +31,18 @@ app.get('/reservas', async (req, res) => {
   try {
     const { rows } = await db.query(`
       SELECT 
-        R.CODIGO, 
-        R.DATA_HORA_INICIO, 
-        R.DATA_HORA_FIM, 
-        R.STATUS, 
-        P.NOME AS PROFESSOR_NOME, 
-        D.NOME AS DISCIPLINA_NOME,
-        T.NOME AS TURMA_NOME,
-        L.NOME AS LABORATORIO_NOME
+        R.CODIGO as codigo,
+        R.DATA_HORA_INICIO as data_hora_inicio, 
+        R.DATA_HORA_FIM as data_hora_fim,
+        R.CPF_PROFESSOR as cpf_professor,
+        R.COD_DISCIPLINA as cod_disciplina,
+        R.COD_TURMA as cod_turma,
+        R.COD_LABORATORIO as cod_laboratorio,
+        R.STATUS as status, 
+        P.NOME AS professor_nome, 
+        D.NOME AS disciplina_nome,
+        T.NOME AS turma_nome,
+        L.NOME AS laboratorio_nome
       FROM RESERVA R
       JOIN PROFESSOR P ON R.CPF_PROFESSOR = P.CPF
       JOIN DISCIPLINA D ON R.COD_DISCIPLINA = D.CODIGO
@@ -151,17 +155,39 @@ app.put('/reservas/:codigo/cancelar', async (req, res) => {
 })
 
 // Atualizar reserva
-app.put('/reservas/:codigo/atualizar', async (req, res) => {
+app.put('/reservas/:codigo', async (req, res) => {
   const { codigo } = req.params
-  const { dataHoraInicio, dataHoraFim, codLaboratorio } = req.body
+  const {
+    data_hora_inicio,
+    data_hora_fim,
+    cpf_professor,
+    cod_disciplina,
+    cod_turma,
+    cod_laboratorio,
+  } = req.body
+
   try {
     const query = `
       UPDATE RESERVA
-      SET DATA_HORA_INICIO = $1, DATA_HORA_FIM = $2, COD_LABORATORIO = $3
-      WHERE CODIGO = $4
+      SET 
+        DATA_HORA_INICIO = $1,
+        DATA_HORA_FIM = $2,
+        CPF_PROFESSOR = $3,
+        COD_DISCIPLINA = $4,
+        COD_TURMA = $5,
+        COD_LABORATORIO = $6
+      WHERE CODIGO = $7
       RETURNING *
     `
-    const values = [dataHoraInicio, dataHoraFim, codLaboratorio, codigo]
+    const values = [
+      data_hora_inicio,
+      data_hora_fim,
+      cpf_professor,
+      cod_disciplina,
+      cod_turma,
+      cod_laboratorio,
+      codigo,
+    ]
     const { rows } = await db.query(query, values)
     res.json(rows[0])
   } catch (err) {
@@ -172,6 +198,25 @@ app.put('/reservas/:codigo/atualizar', async (req, res) => {
       })
     }
     res.status(500).json({ error: 'Falha interna ao atualizar reserva' })
+  }
+})
+
+// Excluir reserva
+app.delete('/reservas/:codigo', async (req, res) => {
+  const { codigo } = req.params
+  try {
+    const query = 'DELETE FROM RESERVA WHERE CODIGO = $1 RETURNING CODIGO'
+    const values = [codigo]
+    const { rows } = await db.query(query, values)
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Reserva não encontrada' })
+    }
+
+    res.json({ message: 'Reserva excluída com sucesso', codigo: rows[0].codigo })
+  } catch (err) {
+    console.error('Erro ao excluir reserva:', err.message, err.code)
+    res.status(500).json({ error: 'Falha interna ao excluir reserva' })
   }
 })
 
